@@ -84,10 +84,61 @@ Isto foi para testar o http
 curl -IK https://23.214.219.134
 deve aparecer 200 também, a flag -K significa insecure
 
-sudo iptables -A FORWARD -p udp -d 23.214.219.135 --dport openvpn -j ACCEPT
+sudo iptables -A FORWARD -p udp -d 23.214.219.133 --dport openvpn -j ACCEPT
 sudo iptables -A FORWARD -s 10.8.0.0/24
 
 vm de DMZ:
 sudo dnf install epel-release -y
 sudo dnf install openvpn easy-rsa -y
-mkdir 
+mkdir ~/openvpn-ca
+sudo journalctl -u openvpn-server@server -f
+
+VM de INTERNET:
+sudo dnf install epel-release -y
+sudo dnf makecache
+sudo dnf install openvpn -y
+
+Mascarar ips á saida da DMZ com source 10.8.0.0/24 e saida pela interface enp0s8:
+
+sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o enp0s8 -j MASQUERADE
+sudo iptables -A FORWARD -i tun0 -o enp0s8 -j ACCEPT
+sudo iptables -A FORWARD -i enp0s8 -o tun0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+
+Permitir forward no router entre vpn-gw e internal network:
+sudo iptables -A FORWARD -s 23.214.219.133 -d 192.168.10.0/24 -j ACCEPT
+sudo iptables -A FORWARD -s 192.168.10.0/24 -d 23.214.219.133 -j ACCEPT
+
+NAO ESQUECER na DMZ: sudo sysctl -w net.ipv4.ip_forward=1
+
+sudo modprobe nf_conntrack_ftp
+sudo modprobe nf_nat_ftp
+
+SERVODOR FTP: 192.168.10.3
+
+conexões que têm como destino o ip exterior de outside do router, são direcionadas para o servidor ftp
+o uso do port 21 é para o cliente conseguir usar os comandos mas o port 30000 a 31000 é para fazer a transferencia de ficheiros para que grandes transferências não interfiram com o controlo
+
+sudo iptables -t nat -A PREROUTING -p tcp -d 87.248.214.97 --dport 21 -j DNAT --to-destination 192.168.10.3
+sudo iptables -t nat -A PREROUTING -p tcp -d 87.248.214.97 --dport 30000:31000 -j DNAT --to-destination 192.168.10.3
+
+sudo iptables -A FORWARD -p tcp -d 192.168.10.3 --dport 21 -j ACCEPT
+sudo iptables -A FORWARD -p tcp -d 192.168.10.3 --dport 30000:31000 -j ACCEPT
+
+Depois de configurar ftp server(na internal network) e client(na internet) fazer no cliente:
+ftp 87.248.214.97 
+e experimentar retirar um ficheiro
+
+DATASTORE SERVER IP: 192.168.10.2
+sudo iptables -t nat -A PREROUTING -p tcp -d 87.248.214.97 --dport 22 -j DNAT --to-destination 192.168.10.2
+
+sudo iptables -A FORWARD -p tcp -s 193.137.16.75 -d 192.168.10.3 --dport 22 -j ACCEPT
+sudo iptables -A FORWARD -p tcp -s 193.136.212.1 -d 192.168.10.3 --dport 22 -j ACCEPT
+
+Para testar:
+ssh -b 193.137.16.75 jdias@87.248.214.97
+ssh -b 193.136.212.1 jdias@87.248.214.97
+Deve conectar-se ao terminal da internal network vm
+
+ssh -b 87.248.214.254 jdias@87.248.214.97
+Não deve funcionar e dar timeout

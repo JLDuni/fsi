@@ -102,3 +102,6 @@ mkdir ~/openvpn-ca
 
 ** NOTA: no final de todos os comandos de router não esquecer de guardar as configurações sudo iptables-save > Documentos/config.iptables **
 Para fazer restore das configurações: sudo iptables-restore < Documentos/config.iptables
+
+INTERNET VM:
+sudo dnf install epel-release -y
