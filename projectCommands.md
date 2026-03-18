@@ -14,7 +14,7 @@ sudo ip addr add 87.248.214.97/24 dev enp0s3
 sudo ip addr add 23.214.219.254/25 dev enp0s9
 sudo ip addr add 192.168.10.254/24 dev enp0s10
 
- Permitir conexoes ssh vindas de internal network e vpn-gw
+Permitir conexoes ssh vindas de internal network e vpn-gw
 vpn-gw ip address: 23.214.219.133
 sudo iptables -A INPUT -p tcp -s 192.168.10.0/24 --dport 22 -j ACCEPT
 sudo iptables -A INPUT -p tcp -s 23.214.219.133 --dport 22 -j ACCEPT
@@ -99,3 +99,6 @@ vm de DMZ:
 sudo dnf install epel-release -y
 sudo dnf install openvpn easy-rsa -y
 mkdir ~/openvpn-ca
+
+** NOTA: no final de todos os comandos de router não esquecer de guardar as configurações sudo iptables-save > Documentos/config.iptables **
+Para fazer restore das configurações: sudo iptables-restore < Documentos/config.iptables
