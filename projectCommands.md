@@ -92,7 +92,7 @@ Isto foi para testar o http
 curl -IK https://23.214.219.134
 deve aparecer 200 também, a flag -K significa insecure
 
-sudo iptables -A FORWARD -p udp -d 23.214.219.135 --dport openvpn -j ACCEPT
+sudo iptables -A FORWARD -p udp -d 23.214.219.133 --dport openvpn -j ACCEPT
 sudo iptables -A FORWARD -s 10.8.0.0/24
 
 vm de DMZ:
