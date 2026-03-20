@@ -142,3 +142,31 @@ Deve conectar-se ao terminal da internal network vm
 
 ssh -b 87.248.214.254 jdias@87.248.214.97
 Não deve funcionar e dar timeout
+
+sudo iptables -A FORWARD -p tcp -s 193.137.16.75 --dport 22 -j ACCEPT
+sudo iptables -A FORWARD -p tcp -s 193.137.16.75 --dport 443 -j ACCEPT
+sudo iptables -A FORWARD -p tcp -s 193.137.16.75 --dport 21 -j ACCEPT
+
+sudo iptables -t nat -A POSTROUTING -s 192.168.10.0/24 -o enp0s3 -j MASQUERADE
+
+sudo iptables -A FORWARD -s 192.168.10.0/24 -d 23.214.219.133 -p udp --dport 53 -j ACCEPT
+sudo iptables -A FORWARD -s 192.168.10.0/24 -d 23.214.219.133 -p tcp --dport 53 -j ACCEPT
+sudo iptables -A FORWARD -s 192.168.10.0/24 -p tcp -m multiport --dports 80,443,22 -j ACCEPT
+
+sudo iptables -A FORWARD -s 192.168.10.0/24 -p tcp --dport 21 -j ACCEPT
+sudo iptables -A FORWARD -s 192.168.10.0/24 -p tcp --dport 20 -j ACCEPT
+
+TESTES:
+dig @23.214.219.130 deve funcionar
+curl -I http://www.google.com deve funcionar 
+ssh jdias@87.248.214.254
+
+ftp 87.248.214.254
+deve funcionar
+
+Ficheiro: suricata.config
+drop tcp any any -> $HOME_NET any (msg:"IPS: XSS Attempt Blocked"; content:"<script>"; nocase; sid:1000001; rev:1;)
+
+drop tcp any any -> $HOME_NET any (msg:"IPS: SQLi Attempt Blocked"; content:"SELECT"; nocase; content:"FROM"; nocase; sid:1000002; rev:1;)
+
+drop tcp any any -> $HOME_NET any (msg:"IPS: Port Scan Blocked"; flags:S; threshold:type both, track by_src, count 20, seconds 10; sid:1000003; rev:1;)
