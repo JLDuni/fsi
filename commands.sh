@@ -55,5 +55,6 @@ sudo iptables -A FORWARD -s 192.168.10.0/24 -p tcp --dport 53 -j ACCEPT
 sudo iptables -A FORWARD -s 192.168.10.0/24 -p udp --dport 53 -j ACCEPT
 
 sudo iptables -I FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j NFQUEUE --queue-num 0
-sudo iptables -t mangle -I PREROUTING -p tcp --syn -j NFQUEUE --queue-num 0
+
+sudo iptables -t mangle -I PREROUTING -m conntrack --ctstate NEW,INVALID -j NFQUEUE --queue-num 0
 
